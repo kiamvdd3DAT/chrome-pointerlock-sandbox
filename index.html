@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta http-equiv="origin-trial" content="AuWqlz5BkNMtX8EwB4SWYzK0ksLbz6FDpJXJoDEhVmR7xAlWjuqZuU4RQv7omxzFNCqqC+noGTu33SWVv8KUxgIAAABgeyJvcmlnaW4iOiJodHRwczovL3d3dy4zZGFpbXRyYWluZXIuY29tOjQ0MyIsImZlYXR1cmUiOiJQb2ludGVyTG9ja09wdGlvbnMiLCJleHBpcnkiOjE1OTQ4MDE4MjV9">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Mouse Locker</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="TemplateData/UnityProgress.js"></script>
+    <script src="Build/UnityLoader.js"></script>
+    <script>
+      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/index.json", {onProgress: UnityProgress});
+
+        window.onkeyup = function(e) {
+            var key = e.keyCode ? e.keyCode : e.which;
+            if (key == 70 && unityIsReady) { //F key
+                toggleFullscreen(true);
+            }
+
+            if (key == 66 && unityIsReady) { //B key, needed for Edge
+                if (document.documentMode || /Edge/.test(navigator.userAgent)) {
+                    lockThePointer();
+                }
+            }
+        }
+
+      	document.addEventListener('pointerlockchange', lockChangeAlert, false);
+        document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+
+        function lockChangeAlert() {
+            checkThePointer();
+        }
+
+      	function lockThePointer() {
+            console.log('js >> locking the pointer');
+
+            document.body.requestPointerLock({
+                unadjustedMovement: true
+            })
+            .then(() => {
+                console.log('hooray! We got pointer lock');
+            })
+            .catch(error => {
+                console.log('something went wrong', error);
+                if (error.name == 'NotSupportedError') {
+                    // Some platforms do not support unadjusted movement. If you
+                    // would like PointerLock anyway, request again.
+                    document.body.requestPointerLock();
+                }
+            });
+        }
+
+        function unlockThePointer() {
+            console.log('js >> unlocking the pointer');
+
+            document.exitPointerLock = document.exitPointerLock ||
+                document.mozExitPointerLock;
+            document.exitPointerLock();
+
+        }
+
+        function checkThePointer() {
+            if (document.pointerLockElement === document.getElementById('#canvas') ||
+                document.mozPointerLockElement === document.getElementById('#canvas')) {
+
+                console.log('js >> pointer locked');
+
+                pointerGotLocked();
+            } else {
+                console.log('js >> pointer unlocked');
+
+                lostPointerLock();
+            }
+        }
+
+        function pointerGotLocked() {
+            unityInstance.SendMessage('PF_MenuController', 'OnPointerStateChange', 'locked');
+            document.getElementById('#canvas').style.cursor = "none";
+        }
+
+        function lostPointerLock() {
+            unityInstance.SendMessage('PF_MenuController', 'OnPointerStateChange', 'normal');
+            document.getElementById('#canvas').style.cursor = "default";
+
+        }
+    </script>
+  </head>
+  <body>
+    <div class="webgl-content">
+      <div id="unityContainer" style="width: 960px; height: 600px"></div>
+      <div class="footer">
+        <div class="webgl-logo"></div>
+        <div class="fullscreen" onclick="unityInstance.SetFullscreen(1)"></div>
+        <div class="title">Mouse Locker</div>
+      </div>
+    </div>
+  </body>
+</html>
